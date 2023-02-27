@@ -1,0 +1,46 @@
+domain: calvarado04.com
+layout:
+- go.kubebuilder.io/v3
+plugins:
+  manifests.sdk.operatorframework.io/v2: {}
+  scorecard.sdk.operatorframework.io/v2: {}
+projectName: px-client-operator
+repo: github.com/camartinez04/px-client-operator
+resources:
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: calvarado04.com
+  group: cache
+  kind: Keycloak
+  path: github.com/camartinez04/px-client-operator/api/v1alpha1
+  version: v1alpha1
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: calvarado04.com
+  group: cache
+  kind: Broker
+  path: github.com/camartinez04/px-client-operator/api/v1alpha1
+  version: v1alpha1
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: calvarado04.com
+  group: cache
+  kind: Frontend
+  path: github.com/camartinez04/px-client-operator/api/v1alpha1
+  version: v1alpha1
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: calvarado04.com
+  group: cache
+  kind: Postgres
+  path: github.com/camartinez04/px-client-operator/api/v1alpha1
+  version: v1alpha1
+version: "3"

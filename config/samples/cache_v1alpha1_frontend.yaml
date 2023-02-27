@@ -1,0 +1,12 @@
+apiVersion: cache.calvarado04.com/v1alpha1
+kind: Frontend
+metadata:
+  labels:
+    app.kubernetes.io/name: frontend
+    app.kubernetes.io/instance: frontend-sample
+    app.kubernetes.io/part-of: px-client-operator
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/created-by: px-client-operator
+  name: frontend-sample
+spec:
+  # TODO(user): Add fields here
