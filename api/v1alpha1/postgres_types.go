@@ -25,17 +25,23 @@ import (
 
 // PostgresSpec defines the desired state of Postgres
 type PostgresSpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+	// +kubebuilder:validation:Minimum=1
+	// +kubebuilder:validation:Maximum=1
+	// +kubebuilder:validation:ExclusiveMaximum=false
 
-	// Foo is an example field of Postgres. Edit postgres_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
+	Size             int32  `json:"size"`
+	ContainerPort    int32  `json:"containerPort"`
+	StorageClassName string `json:"storageClassName"`
+	StorageSize      string `json:"storageSize"`
+	PostgresUser     string `json:"postgresUser"`
+	PostgresPassword string `json:"postgresPassword"`
+	PostgresDatabase string `json:"postgresDatabase"`
+	ContainerImage   string `json:"containerImage"`
 }
 
 // PostgresStatus defines the observed state of Postgres
 type PostgresStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+	Conditions []metav1.Condition `json:"conditions,omitempty" patchStrategy:"merge" patchMergeKey:"type" protobuf:"bytes,1,rep,name=conditions"`
 }
 
 //+kubebuilder:object:root=true

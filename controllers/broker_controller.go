@@ -33,9 +33,9 @@ type BrokerReconciler struct {
 	Scheme *runtime.Scheme
 }
 
-//+kubebuilder:rbac:groups=cache.calvarado04.com,resources=brokers,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=cache.calvarado04.com,resources=brokers/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=cache.calvarado04.com,resources=brokers/finalizers,verbs=update
+//+kubebuilder:rbac:groups=pxclient.calvarado04.com,resources=brokers,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=pxclient.calvarado04.com,resources=brokers/status,verbs=get;update;patch
+//+kubebuilder:rbac:groups=pxclient.calvarado04.com,resources=brokers/finalizers,verbs=update
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
