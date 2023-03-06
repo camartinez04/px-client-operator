@@ -9,4 +9,11 @@ metadata:
     app.kubernetes.io/created-by: px-client-operator
   name: postgres-sample
 spec:
-  # TODO(user): Add fields here
+  size: 1
+  containerPort: 5432
+  storageClassName: portworx-db-sc
+  storageSize: 3Gi
+  postgresDatabase: postgres
+  postgresUser: postgres
+  postgresPassword: postgres
+  containerImage: "postgres:14.5"
