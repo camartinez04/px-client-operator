@@ -1,5 +1,5 @@
 # Adds namespace to all resources.
-namespace: px-client-operator-system
+namespace: px-client
 
 # Value of this field is prepended to the
 # names of all resources, e.g. a deployment named
@@ -42,7 +42,7 @@ patchesStrategicMerge:
 #- webhookcainjection_patch.yaml
 
 # the following config is for teaching kustomize how to do var substitution
-vars:
+vars: []
 # [CERTMANAGER] To enable cert-manager, uncomment all sections with 'CERTMANAGER' prefix.
 #- name: CERTIFICATE_NAMESPACE # namespace of the certificate CR
 #  objref:
