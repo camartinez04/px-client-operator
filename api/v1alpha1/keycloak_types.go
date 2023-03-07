@@ -27,18 +27,8 @@ import (
 type KeycloakSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
-
 	// Foo is an example field of Keycloak. Edit keycloak_types.go to remove/update
-	Size               int32  `json:"size"`
-	ContainerPort      int32  `json:"containerPort"`
-	DbServer           string `json:"dbServer"`
-	DbPort             string `json:"dbPort"`
-	DbUser             string `json:"dbUser"`
-	DbName             string `json:"dbName"`
-	MailhogHost        string `json:"mailhogHost,omitempty"`
-	MailhogPort        string `json:"mailhogPort,omitempty"`
-	InitContainerImage string `json:"initContainerImage"`
-	ContainerImage     string `json:"containerImage"`
+	Size int32 `json:"size"`
 }
 
 // KeycloakStatus defines the observed state of Keycloak

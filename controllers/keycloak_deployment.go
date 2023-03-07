@@ -26,7 +26,7 @@ func (r *KeycloakReconciler) deploymentForKeycloak(Keycloak *pxclientv1alpha1.Ke
 	LabelSelectorRequirementVar := metav1.LabelSelectorRequirement{
 		Key:      "app.kubernetes.io/name",
 		Operator: "In",
-		Values:   []string{"Keycloak"},
+		Values:   []string{"keycloak"},
 	}
 
 	// Pod Affinity definition
@@ -48,86 +48,78 @@ func (r *KeycloakReconciler) deploymentForKeycloak(Keycloak *pxclientv1alpha1.Ke
 		},
 	}
 
-	// DB password for the DB connection from a Kubernetes secret
-	PasswordSecret := corev1.SecretKeySelector{
-		Key: "postgresql-password",
-		LocalObjectReference: corev1.LocalObjectReference{
-			Name: "postgres-secrets",
-		},
-	}
-
 	// Environment variables for DB connection
 	envVariables := []corev1.EnvVar{
 		{
-			Name:  "DB_SERVER",
-			Value: Keycloak.Spec.DbServer,
+			Name:  "KEYCLOAK_ADMIN",
+			Value: "admin",
 		},
 		{
-			Name:  "DB_PORT",
-			Value: Keycloak.Spec.DbPort,
+			Name:  "KEYCLOAK_ADMIN_PASSWORD",
+			Value: "change_me",
 		},
 		{
-			Name:  "DB_USER",
-			Value: Keycloak.Spec.DbUser,
+			Name:  "KC_DB_URL",
+			Value: "jdbc:postgresql://postgres/keycloak",
 		},
 		{
-			Name:  "DB_NAME",
-			Value: Keycloak.Spec.DbName,
+			Name:  "KC_DB_USERNAME",
+			Value: "postgres",
 		},
 		{
-			Name: "DB_PASSWORD",
-			ValueFrom: &corev1.EnvVarSource{
-				SecretKeyRef: &PasswordSecret,
-			},
-		}}
-
-	// Define the init containers for the deployment
-	initContainers := []corev1.Container{
+			Name:  "KC_DB_PASSWORD",
+			Value: "testpassword",
+		},
 		{
-			Image:           Keycloak.Spec.InitContainerImage,
-			Name:            "init-Keycloak",
-			ImagePullPolicy: corev1.PullAlways,
-			Env:             envVariables,
+			Name:  "KC_HOSTNAME_STRICT",
+			Value: "false",
 		},
-	}
-
-	// Probes for the container, liveness and readiness
-	containerProbe := corev1.Probe{
-		ProbeHandler: corev1.ProbeHandler{
-			Exec: &corev1.ExecAction{
-				Command: []string{"sh", "-ec", "wget --no-verbose --tries=1 --spider http://127.0.0.1:8080/Keycloak|| exit 1"},
-			},
+		{
+			Name:  "KC_HTTP_ENABLED",
+			Value: "true",
 		},
-		InitialDelaySeconds: 7,
-		TimeoutSeconds:      5,
-		PeriodSeconds:       10,
-		SuccessThreshold:    1,
-		FailureThreshold:    6,
+		{
+			Name:  "PROXY_ADDRESS_FORWARDING",
+			Value: "true",
+		},
+		{
+			Name:  "KC_HOSTNAME_ADMIN_URL",
+			Value: "http://localhost:8080/auth",
+		},
+		{
+			Name:  "KC_HOSTNAME_URL",
+			Value: "http://localhost:8080/auth",
+		},
 	}
 
 	// Define the main containers for the deployment
 	mainContainers := []corev1.Container{{
-		Image:           Keycloak.Spec.ContainerImage,
-		Name:            "Keycloak",
+		Image:           "calvarado2004/portworx-client-keycloak:latest",
+		Name:            "keycloak",
 		ImagePullPolicy: corev1.PullAlways,
 		Env:             envVariables,
-		Ports: []corev1.ContainerPort{{
-			ContainerPort: Keycloak.Spec.ContainerPort,
-			Name:          "http",
-			Protocol:      corev1.ProtocolTCP,
-		}},
-		Resources: corev1.ResourceRequirements{
-			Requests: corev1.ResourceList{
-				corev1.ResourceCPU:    resource.MustParse("10m"),
-				corev1.ResourceMemory: resource.MustParse("10Mi"),
+		Ports: []corev1.ContainerPort{
+			{
+				ContainerPort: 8080,
+				Name:          "http",
+				Protocol:      corev1.ProtocolTCP,
 			},
-			Limits: corev1.ResourceList{
-				corev1.ResourceCPU:    resource.MustParse("100m"),
-				corev1.ResourceMemory: resource.MustParse("100Mi"),
+			{
+				ContainerPort: 8443,
+				Name:          "https",
+				Protocol:      corev1.ProtocolTCP,
 			},
 		},
-		LivenessProbe:  &containerProbe,
-		ReadinessProbe: &containerProbe,
+		Resources: corev1.ResourceRequirements{
+			Requests: corev1.ResourceList{
+				corev1.ResourceCPU:    resource.MustParse("200m"),
+				corev1.ResourceMemory: resource.MustParse("100Mi"),
+			},
+			Limits: corev1.ResourceList{
+				corev1.ResourceCPU:    resource.MustParse("1000m"),
+				corev1.ResourceMemory: resource.MustParse("2Gi"),
+			},
+		},
 	}}
 
 	// Define a PodTemplateSpec object
@@ -136,14 +128,12 @@ func (r *KeycloakReconciler) deploymentForKeycloak(Keycloak *pxclientv1alpha1.Ke
 			Labels: labelsKeycloak,
 		},
 		Spec: corev1.PodSpec{
-			SchedulerName: "stork",
-			Affinity:      &AffinityVar,
+			Affinity: &AffinityVar,
 			SecurityContext: &corev1.PodSecurityContext{
 				RunAsUser:  &userid,
 				RunAsGroup: &groupid,
 			},
-			InitContainers: initContainers,
-			Containers:     mainContainers,
+			Containers: mainContainers,
 		}}
 
 	// Finally, define the Deployment
@@ -169,6 +159,7 @@ func (r *KeycloakReconciler) deploymentForKeycloak(Keycloak *pxclientv1alpha1.Ke
 	return deployment, nil
 }
 
+// serviceForKeycloak returns a Keycloak Service object
 func (r *KeycloakReconciler) serviceForKeycloak(Keycloak *pxclientv1alpha1.Keycloak) (serviceKeycloak *corev1.Service, err error) {
 	// Define the Service
 	serviceKeycloak = &corev1.Service{
@@ -183,12 +174,44 @@ func (r *KeycloakReconciler) serviceForKeycloak(Keycloak *pxclientv1alpha1.Keycl
 			Ports: []corev1.ServicePort{
 				{
 					Name:       "http",
-					Port:       Keycloak.Spec.ContainerPort,
-					TargetPort: intstr.FromInt(int(Keycloak.Spec.ContainerPort)),
+					Port:       8080,
+					TargetPort: intstr.FromInt(8080),
+					Protocol:   corev1.ProtocolTCP,
+				},
+				{
+					Name:       "https",
+					Port:       8443,
+					TargetPort: intstr.FromInt(8443),
 					Protocol:   corev1.ProtocolTCP,
 				},
 			},
 		},
 	}
 	return serviceKeycloak, nil
+}
+
+// secretKeycloakRealm returns a Keycloak Realm Secret object
+func (r *KeycloakReconciler) secretKeycloakRealm(Keycloak *pxclientv1alpha1.Keycloak) (secretKeycloak *corev1.Secret, err error) {
+	ls := labelsForPostgres(Keycloak.Name)
+
+	secret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "keycloak",
+			Namespace: Keycloak.Namespace,
+			Labels:    ls,
+		},
+		StringData: map[string]string{
+			"keycloakClientID": "cG9ydHdvcngtY2xpZW50",
+			"keycloakRealm":    "cG9ydHdvcng=",
+			"keycloakSecret":   "cjdaYndzcEJUNTZwUDVCNWNNTlNZd3l3S0l1dzN5U3M=",
+			"keycloakUrl":      "aHR0cDovL2tleWNsb2FrOjgwODA=",
+		},
+	}
+
+	// Set the ownerRef for the Secret
+	// More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/owners-dependents/
+	if err := ctrl.SetControllerReference(Keycloak, secret, r.Scheme); err != nil {
+		return nil, err
+	}
+	return secret, nil
 }

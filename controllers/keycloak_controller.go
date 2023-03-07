@@ -66,6 +66,56 @@ type KeycloakReconciler struct {
 //+kubebuilder:rbac:groups=core,resources=pods;services;events;secrets;configmaps;persistentvolumeclaims,verbs=create;patch;update;delete;get;list;watch
 //+kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;patch;delete
 
+// CreateSecret is the function that will create the secret for the keycloak deployment
+func (r *KeycloakReconciler) CreateSecret(ctx context.Context, Keycloak *pxclientv1alpha1.Keycloak) (ctrl.Result, error) {
+
+	log := log.FromContext(ctx)
+
+	// Check if keycloak secret exists, if not create it new
+	secretFound := &corev1.Secret{}
+	err := r.Get(ctx, types.NamespacedName{Name: "keycloak", Namespace: Keycloak.Namespace}, secretFound)
+	if err != nil && apierrors.IsNotFound(err) {
+
+		secret, err := r.secretKeycloakRealm(Keycloak)
+		if err != nil {
+			log.Error(err, "Failed to create Secret resource for Keycloak Realm")
+
+			// The following implementation will update the status
+			meta.SetStatusCondition(&Keycloak.Status.Conditions, metav1.Condition{Type: typeAvailablePostgres,
+				Status: metav1.ConditionFalse, Reason: "Reconciling",
+				Message: fmt.Sprintf("Failed to create Secret for the custom resource (%s): (%s)", Keycloak.Name, err)})
+
+			if err := r.Status().Update(ctx, Keycloak); err != nil {
+				log.Error(err, "Failed to update keycloak status")
+				return ctrl.Result{}, err
+			}
+
+			return ctrl.Result{}, err
+		}
+
+		log.Info("Creating a new Secret", "Secret.Namespace", secret.Namespace, "Secret.Name", secret.Name)
+		if err = r.Create(ctx, secret); err != nil && apierrors.IsNotFound(err) {
+			log.Error(err, "Failed to create secret for keycloak on namespace")
+			return ctrl.Result{RequeueAfter: time.Minute}, nil
+		}
+
+		log.Info("Secret for keycloak was created successfully", "Secret.Namespace", secret.Namespace, "Secret.Name", secret.Name)
+
+		// Secret created successfully
+		// We will requeue the reconciliation so that we can ensure the state
+		// and move forward for the next operations
+		return ctrl.Result{RequeueAfter: time.Minute}, nil
+
+	} else if err != nil {
+		log.Error(err, "Failed to get Secret")
+		// Let's return the error for the reconciliation be re-trigged again
+		return ctrl.Result{}, err
+	}
+
+	return ctrl.Result{RequeueAfter: time.Minute}, nil
+
+}
+
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
 
@@ -321,6 +371,12 @@ func (r *KeycloakReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 		return ctrl.Result{}, err
 	}
 
+	_, err = r.CreateSecret(ctx, keycloak)
+	if err != nil {
+		log.Error(err, "Failed to create Secret")
+		return ctrl.Result{}, err
+	}
+
 	return ctrl.Result{RequeueAfter: time.Second * 30}, nil
 }
 
@@ -359,7 +415,7 @@ func (r *KeycloakReconciler) doFinalizerOperationsForKeycloak(cr *pxclientv1alph
 // More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/common-labels/
 func labelsForKeycloak(name string) map[string]string {
 	var imageTag string
-	image, initImage, err := imageForKeycloak()
+	image, err := imageForKeycloak()
 	if err == nil {
 		imageTag = strings.Split(image, ":")[1]
 	}
@@ -367,7 +423,6 @@ func labelsForKeycloak(name string) map[string]string {
 		"app.kubernetes.io/instance":   name,
 		"app.kubernetes.io/name":       "keycloak",
 		"app.kubernetes.io/version":    imageTag,
-		"app.kubernetes.io/init":       initImage,
 		"app.kubernetes.io/part-of":    "keycloak-operator",
 		"app.kubernetes.io/created-by": "controller-manager",
 	}
@@ -375,19 +430,14 @@ func labelsForKeycloak(name string) map[string]string {
 
 // imageForKeycloak gets the Operand image which is managed by this controller
 // from the Keycloak_IMAGE environment variable defined in the config/manager/manager.yaml
-func imageForKeycloak() (image string, initImage string, errorFound error) {
+func imageForKeycloak() (image string, errorFound error) {
 	var imageEnvVar = "KEYCLOAK_IMAGE"
-	var imageInitEnvVar = "KEYCLOAK_INIT_IMAGE"
 	image, found := os.LookupEnv(imageEnvVar)
 	if !found {
-		return "", "", fmt.Errorf("Unable to find %s environment variable with the image", imageEnvVar)
+		return "", fmt.Errorf("Unable to find %s environment variable with the image", imageEnvVar)
 	}
 
-	initImage, found = os.LookupEnv(imageInitEnvVar)
-	if !found {
-		return "", "", fmt.Errorf("Unable to find %s environment variable with the image", imageInitEnvVar)
-	}
-	return image, initImage, nil
+	return image, nil
 }
 
 // SetupWithManager sets up the controller with the Manager.
