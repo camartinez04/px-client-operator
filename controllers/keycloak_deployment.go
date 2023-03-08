@@ -60,7 +60,7 @@ func (r *KeycloakReconciler) deploymentForKeycloak(Keycloak *pxclientv1alpha1.Ke
 		},
 		{
 			Name:  "KC_DB_URL",
-			Value: "jdbc:postgresql://postgres/keycloak",
+			Value: "jdbc:postgresql://postgres-svc/keycloak",
 		},
 		{
 			Name:  "KC_DB_USERNAME",
@@ -68,7 +68,7 @@ func (r *KeycloakReconciler) deploymentForKeycloak(Keycloak *pxclientv1alpha1.Ke
 		},
 		{
 			Name:  "KC_DB_PASSWORD",
-			Value: "testpassword",
+			Value: "postgres",
 		},
 		{
 			Name:  "KC_HOSTNAME_STRICT",

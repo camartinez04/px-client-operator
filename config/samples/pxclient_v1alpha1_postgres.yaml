@@ -13,7 +13,7 @@ spec:
   containerPort: 5432
   storageClassName: portworx-db-sc
   storageSize: 3Gi
-  postgresDatabase: postgres
+  postgresDatabase: keycloak
   postgresUser: postgres
   postgresPassword: postgres
   containerImage: "postgres:14.5"
