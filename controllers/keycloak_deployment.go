@@ -92,6 +92,20 @@ func (r *KeycloakReconciler) deploymentForKeycloak(Keycloak *pxclientv1alpha1.Ke
 		},
 	}
 
+	// Probes for the container, liveness and readiness
+	containerProbe := corev1.Probe{
+		ProbeHandler: corev1.ProbeHandler{
+			Exec: &corev1.ExecAction{
+				Command: []string{"sh", "-ec", "curl -s http://127.0.0.1:8080/realms/master || exit 1"},
+			},
+		},
+		InitialDelaySeconds: 60,
+		TimeoutSeconds:      5,
+		PeriodSeconds:       10,
+		SuccessThreshold:    1,
+		FailureThreshold:    6,
+	}
+
 	// Define the main containers for the deployment
 	mainContainers := []corev1.Container{{
 		Image:           "calvarado2004/portworx-client-keycloak:latest",
@@ -120,6 +134,8 @@ func (r *KeycloakReconciler) deploymentForKeycloak(Keycloak *pxclientv1alpha1.Ke
 				corev1.ResourceMemory: resource.MustParse("2Gi"),
 			},
 		},
+		ReadinessProbe: &containerProbe,
+		LivenessProbe:  &containerProbe,
 	}}
 
 	// Define a PodTemplateSpec object
@@ -204,7 +220,7 @@ func (r *KeycloakReconciler) secretKeycloakRealm(Keycloak *pxclientv1alpha1.Keyc
 			"keycloakClientID": "cG9ydHdvcngtY2xpZW50",
 			"keycloakRealm":    "cG9ydHdvcng=",
 			"keycloakSecret":   "cjdaYndzcEJUNTZwUDVCNWNNTlNZd3l3S0l1dzN5U3M=",
-			"keycloakUrl":      "aHR0cDovL2tleWNsb2FrOjgwODA=",
+			"keycloakUrl":      "aHR0cDovL2tleWNsb2FrLXN2Yzo4MDgw",
 		},
 	}
 
