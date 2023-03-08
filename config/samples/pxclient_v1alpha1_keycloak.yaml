@@ -3,10 +3,10 @@ kind: Keycloak
 metadata:
   labels:
     app.kubernetes.io/name: keycloak
-    app.kubernetes.io/instance: keycloak-sample
+    app.kubernetes.io/instance: keycloak
     app.kubernetes.io/part-of: px-client-operator
     app.kubernetes.io/managed-by: kustomize
     app.kubernetes.io/created-by: px-client-operator
-  name: keycloak-sample
+  name: keycloak
 spec:
   size: 1

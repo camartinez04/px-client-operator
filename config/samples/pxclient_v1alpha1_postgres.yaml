@@ -3,11 +3,11 @@ kind: Postgres
 metadata:
   labels:
     app.kubernetes.io/name: postgres
-    app.kubernetes.io/instance: postgres-sample
+    app.kubernetes.io/instance: postgres
     app.kubernetes.io/part-of: px-client-operator
     app.kubernetes.io/managed-by: kustomize
     app.kubernetes.io/created-by: px-client-operator
-  name: postgres-sample
+  name: postgres
 spec:
   size: 1
   containerPort: 5432

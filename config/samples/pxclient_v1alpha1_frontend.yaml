@@ -3,10 +3,10 @@ kind: Frontend
 metadata:
   labels:
     app.kubernetes.io/name: frontend
-    app.kubernetes.io/instance: frontend-sample
+    app.kubernetes.io/instance: frontend
     app.kubernetes.io/part-of: px-client-operator
     app.kubernetes.io/managed-by: kustomize
     app.kubernetes.io/created-by: px-client-operator
-  name: frontend-sample
+  name: frontend
 spec:
   # TODO(user): Add fields here

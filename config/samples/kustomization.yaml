@@ -1,7 +1,7 @@
 ## Append samples you want in your CSV to this file as resources ##
 resources:
-- cache_v1alpha1_keycloak.yaml
-- cache_v1alpha1_broker.yaml
-- cache_v1alpha1_frontend.yaml
-- cache_v1alpha1_postgres.yaml
+- pxclient_v1alpha1_keycloak.yaml
+- pxclient_v1alpha1_broker.yaml
+- pxclient_v1alpha1_frontend.yaml
+- pxclient_v1alpha1_postgres.yaml
 #+kubebuilder:scaffold:manifestskustomizesamples
