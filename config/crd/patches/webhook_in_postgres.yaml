@@ -2,7 +2,7 @@
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
-  name: postgres.cache.calvarado04.com
+  name: postgres.pxclient.calvarado04.com
 spec:
   conversion:
     strategy: Webhook

@@ -2,10 +2,10 @@
 # since it depends on service name and namespace that are out of this kustomize package.
 # It should be run by config/default
 resources:
-- bases/cache.calvarado04.com_keycloaks.yaml
-- bases/cache.calvarado04.com_brokers.yaml
-- bases/cache.calvarado04.com_frontends.yaml
-- bases/cache.calvarado04.com_postgres.yaml
+- bases/pxclient.calvarado04.com_keycloaks.yaml
+- bases/pxclient.calvarado04.com_brokers.yaml
+- bases/pxclient.calvarado04.com_frontends.yaml
+- bases/pxclient.calvarado04.com_postgres.yaml
 #+kubebuilder:scaffold:crdkustomizeresource
 
 patchesStrategicMerge:

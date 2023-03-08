@@ -12,7 +12,7 @@ metadata:
   name: broker-editor-role
 rules:
 - apiGroups:
-  - cache.calvarado04.com
+  - pxclient.calvarado04.com
   resources:
   - brokers
   verbs:
@@ -24,7 +24,7 @@ rules:
   - update
   - watch
 - apiGroups:
-  - cache.calvarado04.com
+  - pxclient.calvarado04.com
   resources:
   - brokers/status
   verbs:

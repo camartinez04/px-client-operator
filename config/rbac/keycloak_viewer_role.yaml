@@ -12,7 +12,7 @@ metadata:
   name: keycloak-viewer-role
 rules:
 - apiGroups:
-  - cache.calvarado04.com
+  - pxclient.calvarado04.com
   resources:
   - keycloaks
   verbs:
@@ -20,7 +20,7 @@ rules:
   - list
   - watch
 - apiGroups:
-  - cache.calvarado04.com
+  - pxclient.calvarado04.com
   resources:
   - keycloaks/status
   verbs:

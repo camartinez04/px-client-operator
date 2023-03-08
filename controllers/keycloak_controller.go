@@ -116,6 +116,152 @@ func (r *KeycloakReconciler) CreateSecret(ctx context.Context, Keycloak *pxclien
 
 }
 
+// createKeycloakService is the function that will create the service for the keycloak deployment
+func (r *KeycloakReconciler) createKeycloakService(ctx context.Context, keycloak *pxclientv1alpha1.Keycloak) (ctrl.Result, error) {
+
+	log := log.FromContext(ctx)
+
+	// Check if service already exists, if not create a new one
+	foundService := &corev1.Service{}
+	err := r.Get(ctx, types.NamespacedName{Name: "Keycloak-svc", Namespace: keycloak.Namespace}, foundService)
+	if err != nil && apierrors.IsNotFound(err) {
+
+		svc, err := r.serviceForKeycloak(keycloak)
+		if err != nil {
+			log.Error(err, "Failed to define new Service resource for keycloak")
+
+			// The following implementation will update the status
+			meta.SetStatusCondition(&keycloak.Status.Conditions, metav1.Condition{Type: typeAvailableKeycloak,
+				Status: metav1.ConditionFalse, Reason: "Reconciling",
+				Message: fmt.Sprintf("Failed to create Service for the custom resource (%s): (%s)", keycloak.Name, err)})
+
+			if err := r.Status().Update(ctx, keycloak); err != nil {
+				log.Error(err, "Failed to update keycloak status")
+				return ctrl.Result{}, err
+			}
+
+			return ctrl.Result{}, err
+		}
+
+		log.Info("Creating a new Service", "Service.Namespace", svc.Namespace, "Service.Name", svc.Name)
+		if err = r.Create(ctx, svc); err != nil {
+			log.Error(err, "Failed to create new Service",
+				"Service.Namespace", svc.Namespace, "Service.Name", svc.Name)
+			return ctrl.Result{}, err
+		}
+
+		// Service created successfully
+		// We will requeue the reconciliation so that we can ensure the state
+		// and move forward for the next operations
+
+		return ctrl.Result{RequeueAfter: time.Minute}, nil
+
+	} else if err != nil {
+		log.Error(err, "Failed to get Service")
+		// Let's return the error for the reconciliation be re-trigged again
+		return ctrl.Result{}, err
+	}
+
+	return ctrl.Result{RequeueAfter: time.Minute}, nil
+}
+
+// createKeycloakDeployment is the function that will create the deployment for the keycloak deployment
+func (r *KeycloakReconciler) createKeycloakDeployment(ctx context.Context, keycloak *pxclientv1alpha1.Keycloak, req ctrl.Request) (ctrl.Result, error) {
+
+	log := log.FromContext(ctx)
+
+	// Check if deployment already exists, if not create a new one
+	found := &appsv1.Deployment{}
+	err := r.Get(ctx, types.NamespacedName{Name: keycloak.Name, Namespace: keycloak.Namespace}, found)
+	if err != nil && apierrors.IsNotFound(err) {
+		// Define a new deployment
+		dep, err := r.deploymentForKeycloak(keycloak)
+		if err != nil {
+			log.Error(err, "Failed to define new Deployment resource for keycloak")
+
+			// The following implementation will update the status
+			meta.SetStatusCondition(&keycloak.Status.Conditions, metav1.Condition{Type: typeAvailableKeycloak,
+				Status: metav1.ConditionFalse, Reason: "Reconciling",
+				Message: fmt.Sprintf("Failed to create Deployment for the custom resource (%s): (%s)", keycloak.Name, err)})
+
+			if err := r.Status().Update(ctx, keycloak); err != nil {
+				log.Error(err, "Failed to update keycloak status")
+				return ctrl.Result{}, err
+			}
+
+			return ctrl.Result{}, err
+		}
+
+		log.Info("Creating a new Deployment",
+			"Deployment.Namespace", dep.Namespace, "Deployment.Name", dep.Name)
+		if err = r.Create(ctx, dep); err != nil {
+			log.Error(err, "Failed to create new Deployment",
+				"Deployment.Namespace", dep.Namespace, "Deployment.Name", dep.Name)
+			return ctrl.Result{}, err
+		}
+
+		// Deployment created successfully
+		// We will requeue the reconciliation so that we can ensure the state
+		// and move forward for the next operations
+		return ctrl.Result{RequeueAfter: time.Minute}, nil
+	} else if err != nil {
+		log.Error(err, "Failed to get Deployment")
+		// Let's return the error for the reconciliation be re-trigged again
+		return ctrl.Result{}, err
+	}
+
+	// The CRD API is defining that the Keycloak type, have a KeycloakSpec.Size field
+	// to set the quantity of Deployment instances is the desired state on the cluster.
+	// Therefore, the following code will ensure the Deployment size is the same as defined
+	// via the Size spec of the Custom Resource which we are reconciling.
+	size := keycloak.Spec.Size
+	if *found.Spec.Replicas != size {
+		found.Spec.Replicas = &size
+		if err = r.Update(ctx, found); err != nil {
+			log.Error(err, "Failed to update Deployment",
+				"Deployment.Namespace", found.Namespace, "Deployment.Name", found.Name)
+
+			// Re-fetch the Keycloak Custom Resource before update the status
+			// so that we have the latest state of the resource on the cluster and we will avoid
+			// raise the issue "the object has been modified, please apply
+			// your changes to the latest version and try again" which would re-trigger the reconciliation
+			if err := r.Get(ctx, req.NamespacedName, keycloak); err != nil {
+				log.Error(err, "Failed to re-fetch keycloak")
+				return ctrl.Result{}, err
+			}
+
+			// The following implementation will update the status
+			meta.SetStatusCondition(&keycloak.Status.Conditions, metav1.Condition{Type: typeAvailableKeycloak,
+				Status: metav1.ConditionFalse, Reason: "Resizing",
+				Message: fmt.Sprintf("Failed to update the size for the custom resource (%s): (%s)", keycloak.Name, err)})
+
+			if err := r.Status().Update(ctx, keycloak); err != nil {
+				log.Error(err, "Failed to update keycloak status")
+				return ctrl.Result{}, err
+			}
+
+			return ctrl.Result{}, err
+		}
+
+		// Now, that we update the size we want to requeue the reconciliation
+		// so that we can ensure that we have the latest state of the resource before
+		// update. Also, it will help ensure the desired state on the cluster
+		return ctrl.Result{Requeue: true}, nil
+	}
+
+	// The following implementation will update the status
+	meta.SetStatusCondition(&keycloak.Status.Conditions, metav1.Condition{Type: typeAvailableKeycloak,
+		Status: metav1.ConditionTrue, Reason: "Reconciling",
+		Message: fmt.Sprintf("Deployment for custom resource (%s) with %d replicas created successfully", keycloak.Name, size)})
+
+	if err := r.Status().Update(ctx, keycloak); err != nil {
+		log.Error(err, "Failed to update keycloak status")
+		return ctrl.Result{}, err
+	}
+
+	return ctrl.Result{RequeueAfter: time.Minute}, nil
+}
+
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
 
@@ -241,133 +387,15 @@ func (r *KeycloakReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 		return ctrl.Result{}, nil
 	}
 
-	// Check if service already exists, if not create a new one
-	foundService := &corev1.Service{}
-	err = r.Get(ctx, types.NamespacedName{Name: "Keycloak-svc", Namespace: keycloak.Namespace}, foundService)
-	if err != nil && apierrors.IsNotFound(err) {
-
-		svc, err := r.serviceForKeycloak(keycloak)
-		if err != nil {
-			log.Error(err, "Failed to define new Service resource for keycloak")
-
-			// The following implementation will update the status
-			meta.SetStatusCondition(&keycloak.Status.Conditions, metav1.Condition{Type: typeAvailableKeycloak,
-				Status: metav1.ConditionFalse, Reason: "Reconciling",
-				Message: fmt.Sprintf("Failed to create Service for the custom resource (%s): (%s)", keycloak.Name, err)})
-
-			if err := r.Status().Update(ctx, keycloak); err != nil {
-				log.Error(err, "Failed to update keycloak status")
-				return ctrl.Result{}, err
-			}
-
-			return ctrl.Result{}, err
-		}
-
-		log.Info("Creating a new Service", "Service.Namespace", svc.Namespace, "Service.Name", svc.Name)
-		if err = r.Create(ctx, svc); err != nil {
-			log.Error(err, "Failed to create new Service",
-				"Service.Namespace", svc.Namespace, "Service.Name", svc.Name)
-			return ctrl.Result{}, err
-		}
-
-		// Service created successfully
-		// We will requeue the reconciliation so that we can ensure the state
-		// and move forward for the next operations
-
-		return ctrl.Result{RequeueAfter: time.Minute}, nil
-
-	} else if err != nil {
-		log.Error(err, "Failed to get Service")
-		// Let's return the error for the reconciliation be re-trigged again
+	_, err = r.createKeycloakDeployment(ctx, keycloak, req)
+	if err != nil {
+		log.Error(err, "Failed to create Deployment")
 		return ctrl.Result{}, err
 	}
 
-	// Check if deployment already exists, if not create a new one
-	found := &appsv1.Deployment{}
-	err = r.Get(ctx, types.NamespacedName{Name: keycloak.Name, Namespace: keycloak.Namespace}, found)
-	if err != nil && apierrors.IsNotFound(err) {
-		// Define a new deployment
-		dep, err := r.deploymentForKeycloak(keycloak)
-		if err != nil {
-			log.Error(err, "Failed to define new Deployment resource for keycloak")
-
-			// The following implementation will update the status
-			meta.SetStatusCondition(&keycloak.Status.Conditions, metav1.Condition{Type: typeAvailableKeycloak,
-				Status: metav1.ConditionFalse, Reason: "Reconciling",
-				Message: fmt.Sprintf("Failed to create Deployment for the custom resource (%s): (%s)", keycloak.Name, err)})
-
-			if err := r.Status().Update(ctx, keycloak); err != nil {
-				log.Error(err, "Failed to update keycloak status")
-				return ctrl.Result{}, err
-			}
-
-			return ctrl.Result{}, err
-		}
-
-		log.Info("Creating a new Deployment",
-			"Deployment.Namespace", dep.Namespace, "Deployment.Name", dep.Name)
-		if err = r.Create(ctx, dep); err != nil {
-			log.Error(err, "Failed to create new Deployment",
-				"Deployment.Namespace", dep.Namespace, "Deployment.Name", dep.Name)
-			return ctrl.Result{}, err
-		}
-
-		// Deployment created successfully
-		// We will requeue the reconciliation so that we can ensure the state
-		// and move forward for the next operations
-		return ctrl.Result{RequeueAfter: time.Minute}, nil
-	} else if err != nil {
-		log.Error(err, "Failed to get Deployment")
-		// Let's return the error for the reconciliation be re-trigged again
-		return ctrl.Result{}, err
-	}
-
-	// The CRD API is defining that the Keycloak type, have a KeycloakSpec.Size field
-	// to set the quantity of Deployment instances is the desired state on the cluster.
-	// Therefore, the following code will ensure the Deployment size is the same as defined
-	// via the Size spec of the Custom Resource which we are reconciling.
-	size := keycloak.Spec.Size
-	if *found.Spec.Replicas != size {
-		found.Spec.Replicas = &size
-		if err = r.Update(ctx, found); err != nil {
-			log.Error(err, "Failed to update Deployment",
-				"Deployment.Namespace", found.Namespace, "Deployment.Name", found.Name)
-
-			// Re-fetch the Keycloak Custom Resource before update the status
-			// so that we have the latest state of the resource on the cluster and we will avoid
-			// raise the issue "the object has been modified, please apply
-			// your changes to the latest version and try again" which would re-trigger the reconciliation
-			if err := r.Get(ctx, req.NamespacedName, keycloak); err != nil {
-				log.Error(err, "Failed to re-fetch keycloak")
-				return ctrl.Result{}, err
-			}
-
-			// The following implementation will update the status
-			meta.SetStatusCondition(&keycloak.Status.Conditions, metav1.Condition{Type: typeAvailableKeycloak,
-				Status: metav1.ConditionFalse, Reason: "Resizing",
-				Message: fmt.Sprintf("Failed to update the size for the custom resource (%s): (%s)", keycloak.Name, err)})
-
-			if err := r.Status().Update(ctx, keycloak); err != nil {
-				log.Error(err, "Failed to update keycloak status")
-				return ctrl.Result{}, err
-			}
-
-			return ctrl.Result{}, err
-		}
-
-		// Now, that we update the size we want to requeue the reconciliation
-		// so that we can ensure that we have the latest state of the resource before
-		// update. Also, it will help ensure the desired state on the cluster
-		return ctrl.Result{Requeue: true}, nil
-	}
-
-	// The following implementation will update the status
-	meta.SetStatusCondition(&keycloak.Status.Conditions, metav1.Condition{Type: typeAvailableKeycloak,
-		Status: metav1.ConditionTrue, Reason: "Reconciling",
-		Message: fmt.Sprintf("Deployment for custom resource (%s) with %d replicas created successfully", keycloak.Name, size)})
-
-	if err := r.Status().Update(ctx, keycloak); err != nil {
-		log.Error(err, "Failed to update keycloak status")
+	_, err = r.createKeycloakService(ctx, keycloak)
+	if err != nil {
+		log.Error(err, "Failed to create Service")
 		return ctrl.Result{}, err
 	}
 

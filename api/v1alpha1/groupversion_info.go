@@ -16,7 +16,7 @@ limitations under the License.
 
 // Package v1alpha1 contains API Schema definitions for the cache v1alpha1 API group
 // +kubebuilder:object:generate=true
-// +groupName=cache.calvarado04.com
+// +groupName=pxclient.calvarado04.com
 package v1alpha1
 
 import (
