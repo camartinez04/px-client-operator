@@ -84,7 +84,7 @@ func (r *FrontendReconciler) deploymentForFrontend(Frontend *pxclientv1alpha1.Fr
 	envVariables := []corev1.EnvVar{
 		{
 			Name:  "BROKER_URL",
-			Value: "broker-svc:8081",
+			Value: "http://broker-svc:8081",
 		},
 		{
 			Name: "KEYCLOAK_URL",
