@@ -10,23 +10,23 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 )
 
-// deploymentForBroker returns a Broker Deployment object
-func (r *BrokerReconciler) deploymentForBroker(Broker *pxclientv1alpha1.Broker) (*appsv1.Deployment, error) {
+// deploymentForFrontend returns a Frontend Deployment object
+func (r *FrontendReconciler) deploymentForFrontend(Frontend *pxclientv1alpha1.Frontend) (*appsv1.Deployment, error) {
 
 	userid := int64(1000)
 	groupid := int64(2000)
 
 	// Labels
-	labelsBroker := labelsForBroker(Broker.Name)
+	labelsFrontend := labelsForFrontend(Frontend.Name)
 
 	// Replicas
-	replicas := Broker.Spec.Size
+	replicas := Frontend.Spec.Size
 
 	// Label Selector Requirements
 	LabelSelectorRequirementVar := metav1.LabelSelectorRequirement{
 		Key:      "app.kubernetes.io/name",
 		Operator: "In",
-		Values:   []string{"Broker"},
+		Values:   []string{"Frontend"},
 	}
 
 	// Pod Affinity definition
@@ -83,12 +83,8 @@ func (r *BrokerReconciler) deploymentForBroker(Broker *pxclientv1alpha1.Broker) 
 	// Environment variables for DB connection
 	envVariables := []corev1.EnvVar{
 		{
-			Name:  "PORTWORX_GRPC_URL",
-			Value: "portworx-service.kube-system:9020",
-		},
-		{
-			Name:  "PORTWORX_TOKEN",
-			Value: Broker.Spec.PortworxToken,
+			Name:  "BROKER_URL",
+			Value: "broker-svc:8081",
 		},
 		{
 			Name: "KEYCLOAK_URL",
@@ -120,7 +116,7 @@ func (r *BrokerReconciler) deploymentForBroker(Broker *pxclientv1alpha1.Broker) 
 	containerProbe := corev1.Probe{
 		ProbeHandler: corev1.ProbeHandler{
 			Exec: &corev1.ExecAction{
-				Command: []string{"sh", "-ec", "wget --no-verbose --tries=1 --spider http://127.0.0.1:8081/ping || exit 1"},
+				Command: []string{"sh", "-ec", "wget --no-verbose --tries=1 --spider http://127.0.0.1:8082/ping || exit 1"},
 			},
 		},
 		InitialDelaySeconds: 7,
@@ -132,13 +128,13 @@ func (r *BrokerReconciler) deploymentForBroker(Broker *pxclientv1alpha1.Broker) 
 
 	// Define the main containers for the deployment
 	mainContainers := []corev1.Container{{
-		Image:           Broker.Spec.ContainerImage,
-		Name:            "broker",
+		Image:           Frontend.Spec.ContainerImage,
+		Name:            "frontend",
 		ImagePullPolicy: corev1.PullAlways,
 		Env:             envVariables,
 		Ports: []corev1.ContainerPort{
 			{
-				ContainerPort: 8081,
+				ContainerPort: 8082,
 				Name:          "http",
 				Protocol:      corev1.ProtocolTCP,
 			},
@@ -160,7 +156,7 @@ func (r *BrokerReconciler) deploymentForBroker(Broker *pxclientv1alpha1.Broker) 
 	// Define a PodTemplateSpec object
 	podTemplate := corev1.PodTemplateSpec{
 		ObjectMeta: metav1.ObjectMeta{
-			Labels: labelsBroker,
+			Labels: labelsFrontend,
 		},
 		Spec: corev1.PodSpec{
 			Affinity: &AffinityVar,
@@ -174,13 +170,13 @@ func (r *BrokerReconciler) deploymentForBroker(Broker *pxclientv1alpha1.Broker) 
 	// Finally, define the Deployment
 	deployment := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      Broker.Name,
-			Namespace: Broker.Namespace,
+			Name:      Frontend.Name,
+			Namespace: Frontend.Namespace,
 		},
 		Spec: appsv1.DeploymentSpec{
 			Replicas: &replicas,
 			Selector: &metav1.LabelSelector{
-				MatchLabels: labelsBroker,
+				MatchLabels: labelsFrontend,
 			},
 			Template: podTemplate,
 		},
@@ -188,33 +184,33 @@ func (r *BrokerReconciler) deploymentForBroker(Broker *pxclientv1alpha1.Broker) 
 
 	// Set the ownerRef for the Deployment
 	// More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/owners-dependents/
-	if err := ctrl.SetControllerReference(Broker, deployment, r.Scheme); err != nil {
+	if err := ctrl.SetControllerReference(Frontend, deployment, r.Scheme); err != nil {
 		return nil, err
 	}
 	return deployment, nil
 }
 
-// serviceForBroker returns a Broker Service object
-func (r *BrokerReconciler) serviceForBroker(Broker *pxclientv1alpha1.Broker) (serviceBroker *corev1.Service, err error) {
+// serviceForFrontend returns a Frontend Service object
+func (r *FrontendReconciler) serviceForFrontend(Frontend *pxclientv1alpha1.Frontend) (serviceFrontend *corev1.Service, err error) {
 	// Define the Service
-	serviceBroker = &corev1.Service{
+	serviceFrontend = &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      Broker.Name + "-svc",
-			Namespace: Broker.Namespace,
+			Name:      Frontend.Name + "-svc",
+			Namespace: Frontend.Namespace,
 		},
 		Spec: corev1.ServiceSpec{
 			Selector: map[string]string{
-				"app.kubernetes.io/name": "broker",
+				"app.kubernetes.io/name": "frontend",
 			},
 			Ports: []corev1.ServicePort{
 				{
 					Name:       "http",
-					Port:       8081,
-					TargetPort: intstr.FromInt(8081),
+					Port:       8082,
+					TargetPort: intstr.FromInt(8082),
 					Protocol:   corev1.ProtocolTCP,
 				},
 			},
 		},
 	}
-	return serviceBroker, nil
+	return serviceFrontend, nil
 }

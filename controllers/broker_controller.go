@@ -409,7 +409,7 @@ func labelsForBroker(name string) map[string]string {
 // imageForBroker gets the Operand image which is managed by this controller
 // from the Broker_IMAGE environment variable defined in the config/manager/manager.yaml
 func imageForBroker() (image string, errorFound error) {
-	var imageEnvVar = "Broker_IMAGE"
+	var imageEnvVar = "BROKER_IMAGE"
 	image, found := os.LookupEnv(imageEnvVar)
 	if !found {
 		return "", fmt.Errorf("Unable to find %s environment variable with the image", imageEnvVar)

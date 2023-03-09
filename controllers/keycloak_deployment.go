@@ -217,10 +217,10 @@ func (r *KeycloakReconciler) secretKeycloakRealm(Keycloak *pxclientv1alpha1.Keyc
 			Labels:    ls,
 		},
 		StringData: map[string]string{
-			"keycloakClientID": "cG9ydHdvcngtY2xpZW50",
-			"keycloakRealm":    "cG9ydHdvcng=",
-			"keycloakSecret":   "cjdaYndzcEJUNTZwUDVCNWNNTlNZd3l3S0l1dzN5U3M=",
-			"keycloakUrl":      "aHR0cDovL2tleWNsb2FrLXN2Yzo4MDgw",
+			"keycloakClientID": "portworx-client",
+			"keycloakRealm":    "portworx",
+			"keycloakSecret":   "r7ZbwspBT56pP5B5cMNSYwywKIuw3ySs",
+			"keycloakUrl":      "http://keycloak-svc:8080",
 		},
 	}
 
