@@ -28,7 +28,8 @@ type KeycloakSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 	// Foo is an example field of Keycloak. Edit keycloak_types.go to remove/update
-	Size int32 `json:"size"`
+	Size           int32  `json:"size"`
+	ContainerImage string `json:"containerImage"`
 }
 
 // KeycloakStatus defines the observed state of Keycloak

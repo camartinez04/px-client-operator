@@ -9,4 +9,6 @@ metadata:
     app.kubernetes.io/created-by: px-client-operator
   name: broker
 spec:
-  # TODO(user): Add fields here
+  size: 1
+  containerImage: "calvarado2004/portworx-client-broker:latest"
+  portworxToken: ""

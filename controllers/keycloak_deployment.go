@@ -108,7 +108,7 @@ func (r *KeycloakReconciler) deploymentForKeycloak(Keycloak *pxclientv1alpha1.Ke
 
 	// Define the main containers for the deployment
 	mainContainers := []corev1.Container{{
-		Image:           "calvarado2004/portworx-client-keycloak:latest",
+		Image:           Keycloak.Spec.ContainerImage,
 		Name:            "keycloak",
 		ImagePullPolicy: corev1.PullAlways,
 		Env:             envVariables,

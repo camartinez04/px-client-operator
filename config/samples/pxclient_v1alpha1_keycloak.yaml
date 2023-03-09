@@ -10,3 +10,4 @@ metadata:
   name: keycloak
 spec:
   size: 1
+  containerImage: "calvarado2004/portworx-client-keycloak:latest"

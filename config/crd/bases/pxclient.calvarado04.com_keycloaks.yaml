@@ -35,6 +35,8 @@ spec:
           spec:
             description: KeycloakSpec defines the desired state of Keycloak
             properties:
+              containerImage:
+                type: string
               size:
                 description: 'INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
                   Important: Run "make" to regenerate code after modifying this file
@@ -42,6 +44,7 @@ spec:
                 format: int32
                 type: integer
             required:
+            - containerImage
             - size
             type: object
           status:

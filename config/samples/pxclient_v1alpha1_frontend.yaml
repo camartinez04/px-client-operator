@@ -9,4 +9,5 @@ metadata:
     app.kubernetes.io/created-by: px-client-operator
   name: frontend
 spec:
-  # TODO(user): Add fields here
+  size: 1
+  containerImage: "calvarado2004/portworx-client-frontend:latest"
