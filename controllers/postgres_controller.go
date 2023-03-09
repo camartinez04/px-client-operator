@@ -21,7 +21,7 @@ import (
 	"time"
 )
 
-const postgresFinalizer = "bookings.calvarado04.com/finalizer"
+const postgresFinalizer = "pxclient.calvarado04.com/finalizer"
 
 // Definitions to manage status conditions
 const (

@@ -39,7 +39,7 @@ import (
 	pxclientv1alpha1 "github.com/camartinez04/px-client-operator/api/v1alpha1"
 )
 
-const keycloakFinalizer = "keycloak.calvarado04.com/finalizer"
+const keycloakFinalizer = "pxclient.calvarado04.com/finalizer"
 
 // Definitions to manage status conditions
 const (
