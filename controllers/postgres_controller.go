@@ -356,7 +356,23 @@ func (r *PostgresReconciler) doFinalizerOperationsForPostgres(cr *pxclientv1alph
 		return
 	}
 
-	log.Info("PVC was successfully deleted")
+	log.Info("Postgres PVC was successfully deleted")
+
+	// Let's delete the Service that was created for the Postgres StatefulSet
+	service := corev1.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "postgres-svc",
+			Namespace: cr.Namespace,
+		},
+	}
+
+	err = r.Delete(context.Background(), &service, client.PropagationPolicy(metav1.DeletePropagationForeground))
+	if err != nil {
+		log.Error(err, "Failed to delete postgres service")
+		return
+	}
+
+	log.Info("Postgres service was successfully deleted")
 
 }
 

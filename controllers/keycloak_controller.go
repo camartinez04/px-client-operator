@@ -410,16 +410,6 @@ func (r *KeycloakReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 
 // doFinalizerOperationsForKeycloak will perform the required operations before delete the CR.
 func (r *KeycloakReconciler) doFinalizerOperationsForKeycloak(cr *pxclientv1alpha1.Keycloak) {
-	// TODO(user): Add the cleanup steps that the operator
-	// needs to do before the CR can be deleted. Examples
-	// of finalizers include performing backups and deleting
-	// resources that are not owned by this CR, like a PVC.
-
-	// Note: It is not recommended to use finalizers with the purpose of delete resources which are
-	// created and managed in the reconciliation. These ones, such as the Deployment created on this reconcile,
-	// are defined as depended of the custom resource. See that we use the method ctrl.SetControllerReference.
-	// to set the ownerRef which means that the Deployment will be deleted by the Kubernetes API.
-	// More info: https://kubernetes.io/docs/tasks/administer-cluster/use-cascading-deletion/
 
 	log := log.FromContext(context.Background())
 
@@ -436,6 +426,22 @@ func (r *KeycloakReconciler) doFinalizerOperationsForKeycloak(cr *pxclientv1alph
 			return
 		}
 	}
+
+	// Deleting the Service
+	service := corev1.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "keycloak-svc",
+			Namespace: cr.Namespace,
+		},
+	}
+
+	err := r.Delete(context.Background(), &service, client.PropagationPolicy(metav1.DeletePropagationForeground))
+	if err != nil {
+		log.Error(err, "Failed to delete keycloak service")
+		return
+	}
+
+	log.Info("Keycloak service was successfully deleted")
 
 }
 
