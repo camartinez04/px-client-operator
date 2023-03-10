@@ -11,7 +11,7 @@ metadata:
 spec:
   size: 1
   containerPort: 5432
-  storageClassName: portworx-db-sc
+  storageClassName: px-csi-db
   storageSize: 3Gi
   postgresDatabase: keycloak
   postgresUser: postgres
