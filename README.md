@@ -39,7 +39,7 @@ oc adm policy add-scc-to-user anyuid -z default -n px-client
 ```sh
 
 ```sh
-kubectl apply -f ./config/samples/
+kubectl apply -f ./config/samples/ -n px-client
 ```
 
 
