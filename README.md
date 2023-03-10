@@ -37,8 +37,6 @@ oc adm policy add-scc-to-user anyuid -z default -n px-client
 5. Install Instances of these Custom Resource Definitions (CRDs) on the cluster:
 
 ```sh
-
-```sh
 kubectl apply -f ./config/samples/ -n px-client
 ```
 
