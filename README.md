@@ -14,7 +14,7 @@ It is required to have a Portworx cluster running in the Kubernetes cluster.
 
 ### Running on the cluster
 
-1. Build and push your image to the location specified by `IMG`:
+1. Build and push your image to the location specified by `IMG`, not needed if you only want to use this operator:
 	
 ```sh
 make docker-build docker-push IMG=calvarado04.com/px-client-operator:latest
@@ -23,8 +23,10 @@ make docker-build docker-push IMG=calvarado04.com/px-client-operator:latest
 2. Deploy the controller to the cluster with the image specified by `IMG`:
 
 ```sh
-make deploy IMG=calvarado04.com/px-client-operator:latest
+make deploy
 ```
+This will install the CRDs and deploy the controller to the cluster on px-client namespace.
+
 3. If cluster is OpenShift/OKD. Add anyuid SCC to the default service account in the namespace where the operator is deployed (px-client).
 ```sh
 oc adm policy add-scc-to-user anyuid -z default -n px-client
@@ -32,7 +34,9 @@ oc adm policy add-scc-to-user anyuid -z default -n px-client
 
 4. If you have Portworx with Security enabled. Add the Token to portworxToken spec on `./config/samples/pxclient_v1alpha1_broker.yaml` from secret `px-admin-token` present in the namespace where Portworx was installed.
 
-5. Install Instances of Custom Resources:
+5. Install Instances of these Custom Resource Definitions (CRDs) on the cluster:
+
+```sh
 
 ```sh
 kubectl apply -f ./config/samples/
