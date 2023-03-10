@@ -14,7 +14,7 @@ It is required to have a Portworx cluster running in the Kubernetes cluster.
 
 ### Running on the cluster
 
-1. Build and push your image to the location specified by `IMG`, `not needed if you only want to use this operator`:
+1. Build and push your image to the location specified by `IMG`, **not needed if you only want to use this operator**:
 	
 ```sh
 make docker-build docker-push IMG=calvarado04.com/px-client-operator:latest
