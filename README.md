@@ -13,25 +13,31 @@ You’ll need a Kubernetes cluster to run against. You can use [KIND](https://si
 It is required to have a Portworx cluster running in the Kubernetes cluster.
 
 ### Running on the cluster
-1. Install Instances of Custom Resources:
 
-If you have Portworx with Security enabled, add the Token to portworxToken spec on `./config/samples/pxclient_v1alpha1_broker.yaml` from secret `px-admin-token` present in the namespace where Portworx was installed.
-
-```sh
-kubectl apply -f ./config/samples/
-```
-
-2. Build and push your image to the location specified by `IMG`:
+1. Build and push your image to the location specified by `IMG`:
 	
 ```sh
 make docker-build docker-push IMG=calvarado04.com/px-client-operator:latest
 ```
 	
-3. Deploy the controller to the cluster with the image specified by `IMG`:
+2. Deploy the controller to the cluster with the image specified by `IMG`:
 
 ```sh
 make deploy IMG=calvarado04.com/px-client-operator:latest
 ```
+3. If cluster is OpenShift/OKD. Add anyuid SCC to the default service account in the namespace where the operator is deployed (px-client).
+```sh
+oc adm policy add-scc-to-user anyuid -z default -n px-client
+```
+
+4. If you have Portworx with Security enabled. Add the Token to portworxToken spec on `./config/samples/pxclient_v1alpha1_broker.yaml` from secret `px-admin-token` present in the namespace where Portworx was installed.
+
+5. Install Instances of Custom Resources:
+
+```sh
+kubectl apply -f ./config/samples/
+```
+
 
 ### Uninstall CRDs
 To delete the CRDs from the cluster:
