@@ -15,8 +15,10 @@ It is required to have a Portworx cluster running in the Kubernetes cluster.
 ### Running on the cluster
 1. Install Instances of Custom Resources:
 
+If you have Portworx with Security enabled, add the Token to portworxToken spec on `./config/samples/pxclient_v1alpha1_broker.yaml` from secret `px-admin-token` present in the namespace where Portworx was installed.
+
 ```sh
-kubectl apply -f config/samples/
+kubectl apply -f ./config/samples/
 ```
 
 2. Build and push your image to the location specified by `IMG`:

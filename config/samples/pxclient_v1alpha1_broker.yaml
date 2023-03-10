@@ -1,3 +1,5 @@
+---
+# add portworxToken from secret px-admin-token present in the namespace where Portworx was installed
 apiVersion: pxclient.calvarado04.com/v1alpha1
 kind: Broker
 metadata:
