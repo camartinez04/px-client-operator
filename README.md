@@ -1,12 +1,16 @@
 # px-client-operator
-// TODO(user): Add simple overview of use/purpose
+
+This Operator will help you to deploy the [Portworx Client Application](https://github.com/camartinez04/portworx-client)
 
 ## Description
-// TODO(user): An in-depth paragraph about your project and overview of use
+
+Portworx Client Application is a simple application which enables a web interface to interact with the Portworx gRPC API.
 
 ## Getting Started
 You’ll need a Kubernetes cluster to run against. You can use [KIND](https://sigs.k8s.io/kind) to get a local cluster for testing, or run against a remote cluster.
 **Note:** Your controller will automatically use the current context in your kubeconfig file (i.e. whatever cluster `kubectl cluster-info` shows).
+
+It is required to have a Portworx cluster running in the Kubernetes cluster.
 
 ### Running on the cluster
 1. Install Instances of Custom Resources:
@@ -18,13 +22,13 @@ kubectl apply -f config/samples/
 2. Build and push your image to the location specified by `IMG`:
 	
 ```sh
-make docker-build docker-push IMG=<some-registry>/px-client-operator:tag
+make docker-build docker-push IMG=calvarado04.com/px-client-operator:latest
 ```
 	
 3. Deploy the controller to the cluster with the image specified by `IMG`:
 
 ```sh
-make deploy IMG=<some-registry>/px-client-operator:tag
+make deploy IMG=calvarado04.com/px-client-operator:latest
 ```
 
 ### Uninstall CRDs
@@ -42,7 +46,7 @@ make undeploy
 ```
 
 ## Contributing
-// TODO(user): Add detailed information on how you would like others to contribute to this project
+Feel free to download and contribute to this project.
 
 ### How it works
 This project aims to follow the Kubernetes [Operator pattern](https://kubernetes.io/docs/concepts/extend-kubernetes/operator/)
