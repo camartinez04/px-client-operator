@@ -28,6 +28,8 @@ func (r *PostgresReconciler) statefulSetForPostgres(Postgres *pxclientv1alpha1.P
 		},
 	}
 
+	// Resources
+
 	// Environment variables for DB connection
 	envVariables := []corev1.EnvVar{
 		{
@@ -51,6 +53,20 @@ func (r *PostgresReconciler) statefulSetForPostgres(Postgres *pxclientv1alpha1.P
 		},
 	}
 
+	// Probes for the container, liveness and readiness, using HTTPGetAction
+	containerProbe := corev1.Probe{
+		ProbeHandler: corev1.ProbeHandler{
+			TCPSocket: &corev1.TCPSocketAction{
+				Port: intstr.FromInt(int(Postgres.Spec.ContainerPort)),
+			},
+		},
+		InitialDelaySeconds: 15,
+		TimeoutSeconds:      5,
+		PeriodSeconds:       10,
+		SuccessThreshold:    1,
+		FailureThreshold:    6,
+	}
+
 	// Postgres container definition
 	mainContainers := []corev1.Container{
 		{
@@ -70,6 +86,18 @@ func (r *PostgresReconciler) statefulSetForPostgres(Postgres *pxclientv1alpha1.P
 					MountPath: "/var/lib/postgresql/data",
 				},
 			},
+			Resources: corev1.ResourceRequirements{
+				Requests: corev1.ResourceList{
+					corev1.ResourceCPU:    resource.MustParse("30m"),
+					corev1.ResourceMemory: resource.MustParse("30Mi"),
+				},
+				Limits: corev1.ResourceList{
+					corev1.ResourceCPU:    resource.MustParse("500m"),
+					corev1.ResourceMemory: resource.MustParse("300Mi"),
+				},
+			},
+			LivenessProbe:  &containerProbe,
+			ReadinessProbe: &containerProbe,
 		},
 	}
 

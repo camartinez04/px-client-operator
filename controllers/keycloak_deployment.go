@@ -92,11 +92,15 @@ func (r *KeycloakReconciler) deploymentForKeycloak(Keycloak *pxclientv1alpha1.Ke
 		},
 	}
 
-	// Probes for the container, liveness and readiness
+	// Probes for the container, liveness and readiness, using HTTPGetAction
 	containerProbe := corev1.Probe{
 		ProbeHandler: corev1.ProbeHandler{
-			Exec: &corev1.ExecAction{
-				Command: []string{"sh", "-ec", "curl -s http://127.0.0.1:8080/realms/master || exit 1"},
+			HTTPGet: &corev1.HTTPGetAction{
+				Path: "/auth",
+				Port: intstr.IntOrString{
+					Type:   intstr.Int,
+					IntVal: 8080,
+				},
 			},
 		},
 		InitialDelaySeconds: 60,

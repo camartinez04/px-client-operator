@@ -112,11 +112,15 @@ func (r *FrontendReconciler) deploymentForFrontend(Frontend *pxclientv1alpha1.Fr
 		},
 	}
 
-	// Probes for the container, liveness and readiness
+	// Probes for the container, liveness and readiness HTTPGet probe
 	containerProbe := corev1.Probe{
 		ProbeHandler: corev1.ProbeHandler{
-			Exec: &corev1.ExecAction{
-				Command: []string{"sh", "-ec", "wget --no-verbose --tries=1 --spider http://127.0.0.1:8082/ping || exit 1"},
+			HTTPGet: &corev1.HTTPGetAction{
+				Path: "/ping",
+				Port: intstr.IntOrString{
+					Type:   intstr.Int,
+					IntVal: 8082,
+				},
 			},
 		},
 		InitialDelaySeconds: 7,
