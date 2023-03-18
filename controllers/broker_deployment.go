@@ -80,6 +80,14 @@ func (r *BrokerReconciler) deploymentForBroker(Broker *pxclientv1alpha1.Broker) 
 		},
 	}
 
+	// Portworx token, this secret is not created by the operator, but is present on config/samples/px-client-operator_v1alpha1_broker.yaml
+	portworxToken := corev1.SecretKeySelector{
+		Key: "token",
+		LocalObjectReference: corev1.LocalObjectReference{
+			Name: "portworx-token",
+		},
+	}
+
 	// Environment variables for DB connection
 	envVariables := []corev1.EnvVar{
 		{
@@ -87,8 +95,10 @@ func (r *BrokerReconciler) deploymentForBroker(Broker *pxclientv1alpha1.Broker) 
 			Value: "portworx-service.kube-system:9020",
 		},
 		{
-			Name:  "PORTWORX_TOKEN",
-			Value: Broker.Spec.PortworxToken,
+			Name: "PORTWORX_TOKEN",
+			ValueFrom: &corev1.EnvVarSource{
+				SecretKeyRef: &portworxToken,
+			},
 		},
 		{
 			Name: "KEYCLOAK_URL",
@@ -108,6 +118,7 @@ func (r *BrokerReconciler) deploymentForBroker(Broker *pxclientv1alpha1.Broker) 
 				SecretKeyRef: &keycloakSecret,
 			},
 		},
+
 		{
 			Name: "KEYCLOAK_REALM",
 			ValueFrom: &corev1.EnvVarSource{

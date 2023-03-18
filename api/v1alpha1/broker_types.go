@@ -31,7 +31,6 @@ type BrokerSpec struct {
 	// Foo is an example field of Broker. Edit broker_types.go to remove/update
 	Size           int32  `json:"size"`
 	ContainerImage string `json:"containerImage"`
-	PortworxToken  string `json:"portworxToken,omitempty"`
 }
 
 // BrokerStatus defines the observed state of Broker

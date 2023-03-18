@@ -13,4 +13,12 @@ metadata:
 spec:
   size: 1
   containerImage: "calvarado2004/portworx-client-broker:latest"
-  portworxToken: ""
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: portworx-token
+type: Opaque
+data:
+  token: ""
+---
