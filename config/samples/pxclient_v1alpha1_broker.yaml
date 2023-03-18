@@ -13,6 +13,7 @@ metadata:
 spec:
   size: 1
   containerImage: "calvarado2004/portworx-client-broker:latest"
+  portworxNamespace: "kube-system"
 ---
 apiVersion: v1
 kind: Secret

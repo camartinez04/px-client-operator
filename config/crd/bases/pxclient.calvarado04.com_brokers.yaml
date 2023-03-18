@@ -37,6 +37,8 @@ spec:
             properties:
               containerImage:
                 type: string
+              portworxNamespace:
+                type: string
               size:
                 description: Foo is an example field of Broker. Edit broker_types.go
                   to remove/update
@@ -44,6 +46,7 @@ spec:
                 type: integer
             required:
             - containerImage
+            - portworxNamespace
             - size
             type: object
           status:

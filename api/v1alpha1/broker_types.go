@@ -29,8 +29,9 @@ type BrokerSpec struct {
 	// Important: Run "make" to regenerate code after modifying this file
 
 	// Foo is an example field of Broker. Edit broker_types.go to remove/update
-	Size           int32  `json:"size"`
-	ContainerImage string `json:"containerImage"`
+	Size              int32  `json:"size"`
+	ContainerImage    string `json:"containerImage"`
+	PortworxNamespace string `json:"portworxNamespace,default=kube-system"`
 }
 
 // BrokerStatus defines the observed state of Broker

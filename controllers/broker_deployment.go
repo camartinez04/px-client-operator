@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"fmt"
 	pxclientv1alpha1 "github.com/camartinez04/px-client-operator/api/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -15,6 +16,8 @@ func (r *BrokerReconciler) deploymentForBroker(Broker *pxclientv1alpha1.Broker) 
 
 	userid := int64(1000)
 	groupid := int64(2000)
+
+	portworxService := fmt.Sprintf("portworx-api.%s.svc.cluster.local:9020", Broker.Spec.PortworxNamespace)
 
 	// Labels
 	labelsBroker := labelsForBroker(Broker.Name)
@@ -92,7 +95,7 @@ func (r *BrokerReconciler) deploymentForBroker(Broker *pxclientv1alpha1.Broker) 
 	envVariables := []corev1.EnvVar{
 		{
 			Name:  "PORTWORX_GRPC_URL",
-			Value: "portworx-service.kube-system:9020",
+			Value: portworxService,
 		},
 		{
 			Name: "PORTWORX_TOKEN",
