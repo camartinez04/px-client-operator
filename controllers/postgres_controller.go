@@ -151,7 +151,7 @@ func (r *PostgresReconciler) CreateStatefulSet(ctx context.Context, Postgres *px
 
 	// Check if the StatefulSet already exists, if not create a new one
 	found := &appsv1.StatefulSet{}
-	err := r.Get(ctx, types.NamespacedName{Name: Postgres.Name, Namespace: Postgres.Namespace}, found)
+	err := r.Get(ctx, types.NamespacedName{Name: "postgres", Namespace: Postgres.Namespace}, found)
 	if err != nil && apierrors.IsNotFound(err) {
 
 		// Define a new StatefulSet

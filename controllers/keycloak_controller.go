@@ -123,7 +123,7 @@ func (r *KeycloakReconciler) createKeycloakService(ctx context.Context, keycloak
 
 	// Check if service already exists, if not create a new one
 	foundService := &corev1.Service{}
-	err := r.Get(ctx, types.NamespacedName{Name: "Keycloak-svc", Namespace: keycloak.Namespace}, foundService)
+	err := r.Get(ctx, types.NamespacedName{Name: "keycloak-svc", Namespace: keycloak.Namespace}, foundService)
 	if err != nil && apierrors.IsNotFound(err) {
 
 		svc, err := r.serviceForKeycloak(keycloak)
@@ -172,7 +172,7 @@ func (r *KeycloakReconciler) createKeycloakDeployment(ctx context.Context, keycl
 
 	// Check if deployment already exists, if not create a new one
 	found := &appsv1.Deployment{}
-	err := r.Get(ctx, types.NamespacedName{Name: keycloak.Name, Namespace: keycloak.Namespace}, found)
+	err := r.Get(ctx, types.NamespacedName{Name: "keycloak", Namespace: keycloak.Namespace}, found)
 	if err != nil && apierrors.IsNotFound(err) {
 		// Define a new deployment
 		dep, err := r.deploymentForKeycloak(keycloak)

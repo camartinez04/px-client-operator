@@ -73,7 +73,7 @@ func (r *FrontendReconciler) createFrontendService(ctx context.Context, Frontend
 
 	// Check if service already exists, if not create a new one
 	foundService := &corev1.Service{}
-	err := r.Get(ctx, types.NamespacedName{Name: "Frontend-svc", Namespace: Frontend.Namespace}, foundService)
+	err := r.Get(ctx, types.NamespacedName{Name: "frontend-svc", Namespace: Frontend.Namespace}, foundService)
 	if err != nil && apierrors.IsNotFound(err) {
 
 		svc, err := r.serviceForFrontend(Frontend)
@@ -122,7 +122,7 @@ func (r *FrontendReconciler) createFrontendDeployment(ctx context.Context, Front
 
 	// Check if deployment already exists, if not create a new one
 	found := &appsv1.Deployment{}
-	err := r.Get(ctx, types.NamespacedName{Name: Frontend.Name, Namespace: Frontend.Namespace}, found)
+	err := r.Get(ctx, types.NamespacedName{Name: "frontend", Namespace: Frontend.Namespace}, found)
 	if err != nil && apierrors.IsNotFound(err) {
 		// Define a new deployment
 		dep, err := r.deploymentForFrontend(Frontend)

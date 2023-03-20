@@ -73,7 +73,7 @@ func (r *BrokerReconciler) createBrokerService(ctx context.Context, Broker *pxcl
 
 	// Check if service already exists, if not create a new one
 	foundService := &corev1.Service{}
-	err := r.Get(ctx, types.NamespacedName{Name: "Broker-svc", Namespace: Broker.Namespace}, foundService)
+	err := r.Get(ctx, types.NamespacedName{Name: "broker-svc", Namespace: Broker.Namespace}, foundService)
 	if err != nil && apierrors.IsNotFound(err) {
 
 		svc, err := r.serviceForBroker(Broker)
@@ -122,7 +122,7 @@ func (r *BrokerReconciler) createBrokerDeployment(ctx context.Context, Broker *p
 
 	// Check if deployment already exists, if not create a new one
 	found := &appsv1.Deployment{}
-	err := r.Get(ctx, types.NamespacedName{Name: Broker.Name, Namespace: Broker.Namespace}, found)
+	err := r.Get(ctx, types.NamespacedName{Name: "broker", Namespace: Broker.Namespace}, found)
 	if err != nil && apierrors.IsNotFound(err) {
 		// Define a new deployment
 		dep, err := r.deploymentForBroker(Broker)
