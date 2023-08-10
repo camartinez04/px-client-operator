@@ -150,3 +150,11 @@ rules:
   - get
   - patch
   - update
+- apiGroups:
+  - security.openshift.io
+  resources:
+  - securitycontextconstraints
+  verbs:
+  - get
+  - patch
+  - update

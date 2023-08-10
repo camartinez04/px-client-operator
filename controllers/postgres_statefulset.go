@@ -1,11 +1,17 @@
 package controllers
 
 import (
+	"context"
+	"fmt"
 	pxclientv1alpha1 "github.com/camartinez04/px-client-operator/api/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	ctrl "sigs.k8s.io/controller-runtime"
 )
@@ -206,4 +212,74 @@ func (r *PostgresReconciler) serviceForPostgres(Postgres *pxclientv1alpha1.Postg
 		},
 	}
 	return servicePostgres, nil
+}
+
+// isRunningOnOpenShift returns true if the operator is running on OpenShift, false otherwise.
+func (r *PostgresReconciler) isRunningOnOpenShift(ctx context.Context) bool {
+
+	// Check the existence of an OpenShift-specific API resource.
+	// E.g., we'll check for 'Project' which is OpenShift specific.
+	gvr := schema.GroupVersionResource{Group: "project.openshift.io", Version: "v1", Resource: "projects"}
+
+	_, err := r.DynClient.Resource(gvr).List(ctx, metav1.ListOptions{Limit: 1})
+	if err != nil {
+		// If we get an error and it's due to the resource not existing, assume it's vanilla Kubernetes
+		if apierrors.IsNotFound(err) {
+			return false
+		}
+		// Otherwise, it's an unexpected error, log it and assume it's not OpenShift for safety.
+		// (You might want to handle this case differently, depending on your requirements)
+		fmt.Println("Unexpected error:", err)
+		return false
+	}
+
+	// If no error, it's likely OpenShift
+	return true
+}
+
+// patchDefaultServiceAccountForAnyUID - This function will patch the default service account to allow any UID to run
+func (r *PostgresReconciler) patchDefaultServiceAccountForAnyUID(namespace string) error {
+	sccToPatch := "anyuid"
+
+	sccGVR := schema.GroupVersionResource{
+		Group:    "security.openshift.io",
+		Version:  "v1",
+		Resource: "securitycontextconstraints",
+	}
+
+	// create the user string for the default service account
+	userToAdd := "system:serviceaccount:" + namespace + ":default" // <-- Note the 'default' SA
+
+	// get the current SCC to check the users
+	sccUnstructured, err := r.DynClient.Resource(sccGVR).Get(context.TODO(), sccToPatch, metav1.GetOptions{})
+	if err != nil {
+		return err
+	}
+
+	// check if the user already exists in the SCC
+	users, found, err := unstructured.NestedStringSlice(sccUnstructured.UnstructuredContent(), "users")
+	if err != nil {
+		return err
+	}
+
+	if found {
+		for _, user := range users {
+			if user == userToAdd {
+				// The user is already added; no action needed
+				return nil
+			}
+		}
+	}
+
+	// patch the SCC
+	patchData := []byte(`[
+        {
+            "path": "/users/-",
+            "op": "add",
+            "value": "` + userToAdd + `"
+        }
+    ]`)
+
+	_, err = r.DynClient.Resource(sccGVR).Patch(context.TODO(), sccToPatch, types.JSONPatchType, patchData, metav1.PatchOptions{})
+	return err
 }

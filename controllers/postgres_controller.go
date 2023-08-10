@@ -11,6 +11,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/record"
 	"os"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -34,8 +36,9 @@ const (
 // PostgresReconciler reconciles a Postgres object
 type PostgresReconciler struct {
 	client.Client
-	Scheme   *runtime.Scheme
-	Recorder record.EventRecorder
+	Scheme    *runtime.Scheme
+	Recorder  record.EventRecorder
+	DynClient dynamic.Interface
 }
 
 // The following markers are used to generate the rules permissions (RBAC) on config/rbac using controller-gen
@@ -43,6 +46,7 @@ type PostgresReconciler struct {
 // To know more about markers see: https://book.kubebuilder.io/reference/markers.html
 
 //+kubebuilder:rbac:groups=pxclient.calvarado04.com,resources=postgres,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=security.openshift.io,resources=securitycontextconstraints,verbs=get;update;patch
 //+kubebuilder:rbac:groups=pxclient.calvarado04.com,resources=postgres/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=pxclient.calvarado04.com,resources=postgres/finalizers,verbs=update
 //+kubebuilder:rbac:groups=core,resources=pods;services;events;secrets;configmaps;persistentvolumeclaims,verbs=create;patch;update;delete;get;list;watch
@@ -196,13 +200,37 @@ func (r *PostgresReconciler) CreateStatefulSet(ctx context.Context, Postgres *px
 }
 
 func (r *PostgresReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+
 	log := log.FromContext(ctx)
+
+	config, err := rest.InClusterConfig()
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+
+	dynClient, err := dynamic.NewForConfig(config)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+
+	r.DynClient = dynClient
+
+	// If we are running on OpenShift, patch the default service account to allow any UID
+	isOpenShift := r.isRunningOnOpenShift(ctx)
+	if isOpenShift {
+		log.Info("Running on OpenShift")
+		err := r.patchDefaultServiceAccountForAnyUID(req.NamespacedName.Namespace)
+		if err != nil {
+			return ctrl.Result{}, err
+		}
+
+	}
 
 	// Fetch the Postgres instance
 	// The purpose is check if the Custom Resource for the Kind Postgres
 	// is applied on the cluster if not we return nil to stop the reconciliation
 	Postgres := &pxclientv1alpha1.Postgres{}
-	err := r.Get(ctx, req.NamespacedName, Postgres)
+	err = r.Get(ctx, req.NamespacedName, Postgres)
 	if err != nil {
 		if apierrors.IsNotFound(err) {
 			// If the custom resource is not found then, it usually means that it was deleted or not created
