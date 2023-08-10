@@ -27,14 +27,10 @@ make deploy
 ```
 This will install the CRDs and deploy the controller to the cluster on `px-client` namespace.
 
-3. If cluster is OpenShift/OKD. Add anyuid SCC to the default service account in the namespace where the operator is deployed (px-client).
-```sh
-oc adm policy add-scc-to-user anyuid -z default -n px-client
-```
 
-4. If you have Portworx with Security enabled. Add the Token to portworxToken spec on `./config/samples/pxclient_v1alpha1_broker.yaml` from secret `px-admin-token` present in the namespace where Portworx was installed.
+3. If you have Portworx with Security enabled. Add the Token to portworxToken spec on `./config/samples/pxclient_v1alpha1_broker.yaml` from secret `px-admin-token` present in the namespace where Portworx was installed.
 
-5. Install Instances of these Custom Resource Definitions (CRDs) on the cluster:
+4. Install Instances of these Custom Resource Definitions (CRDs) on the cluster:
 
 ```sh
 kubectl apply -f ./config/samples/ -n px-client
