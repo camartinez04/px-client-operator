@@ -113,7 +113,7 @@ func (r *PostgresReconciler) statefulSetForPostgres(Postgres *pxclientv1alpha1.P
 			corev1.ReadWriteOnce,
 		},
 		StorageClassName: &Postgres.Spec.StorageClassName,
-		Resources: corev1.ResourceRequirements{
+		Resources: corev1.VolumeResourceRequirements{
 			Requests: corev1.ResourceList{
 				corev1.ResourceStorage: resource.MustParse(Postgres.Spec.StorageSize),
 			},

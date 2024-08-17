@@ -85,16 +85,14 @@ func main() {
 	// The Manager is the main component of the controller-runtime.
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:                        scheme,
-		MetricsBindAddress:            metricsAddr,
-		Port:                          9443,
 		HealthProbeBindAddress:        probeAddr,
 		LeaderElection:                enableLeaderElection,
 		LeaderElectionID:              "9ec62b7c.calvarado04.com",
-		Namespace:                     watchNamespace,
 		LeaseDuration:                 &leaseDuration,
 		RenewDeadline:                 &renewDeadline,
 		RetryPeriod:                   &retryPeriod,
-		LeaderElectionReleaseOnCancel: true,
+		LeaderElectionNamespace:       watchNamespace,
+		LeaderElectionReleaseOnCancel: true, // Still valid in Kubernetes 1.31
 		// LeaderElectionReleaseOnCancel defines if the leader should step down voluntarily
 		// when the Manager ends. This requires the binary to immediately end when the
 		// Manager is stopped, otherwise, this setting is unsafe. Setting this significantly
