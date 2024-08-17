@@ -12,8 +12,8 @@ spec:
   size: 1
   containerPort: 5432
   storageClassName: px-csi-db
-  storageSize: 3Gi
+  storageSize: 5Gi
   postgresDatabase: keycloak
   postgresUser: postgres
   postgresPassword: postgres
-  containerImage: "postgres:14.5"
+  containerImage: "postgres:16"

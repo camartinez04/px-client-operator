@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"go.uber.org/zap/zapcore"
 	"os"
+	"time"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
@@ -76,14 +77,24 @@ func main() {
 			"the manager will watch and manage resources in all namespaces")
 	}
 
+	leaseDuration := time.Second * 30
+	renewDeadline := time.Second * 25
+	retryPeriod := time.Second * 10
+
+	// NewManager returns a new Manager for the controller-runtime.
+	// The Manager is the main component of the controller-runtime.
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
-		Scheme:                 scheme,
-		MetricsBindAddress:     metricsAddr,
-		Port:                   9443,
-		HealthProbeBindAddress: probeAddr,
-		LeaderElection:         enableLeaderElection,
-		LeaderElectionID:       "9ec62b7c.calvarado04.com",
-		Namespace:              watchNamespace,
+		Scheme:                        scheme,
+		MetricsBindAddress:            metricsAddr,
+		Port:                          9443,
+		HealthProbeBindAddress:        probeAddr,
+		LeaderElection:                enableLeaderElection,
+		LeaderElectionID:              "9ec62b7c.calvarado04.com",
+		Namespace:                     watchNamespace,
+		LeaseDuration:                 &leaseDuration,
+		RenewDeadline:                 &renewDeadline,
+		RetryPeriod:                   &retryPeriod,
+		LeaderElectionReleaseOnCancel: true,
 		// LeaderElectionReleaseOnCancel defines if the leader should step down voluntarily
 		// when the Manager ends. This requires the binary to immediately end when the
 		// Manager is stopped, otherwise, this setting is unsafe. Setting this significantly

@@ -74,7 +74,7 @@ func (r *PostgresReconciler) CreateSecret(ctx context.Context, Postgres *pxclien
 
 			if err := r.Status().Update(ctx, Postgres); err != nil {
 				log.Error(err, "Failed to update Postgres status")
-				return ctrl.Result{}, err
+				return ctrl.Result{RequeueAfter: time.Minute}, err
 			}
 
 			return ctrl.Result{}, err
@@ -89,17 +89,16 @@ func (r *PostgresReconciler) CreateSecret(ctx context.Context, Postgres *pxclien
 		log.Info("Secret for Postgres was created successfully", "Secret.Namespace", secret.Namespace, "Secret.Name", secret.Name)
 
 		// Secret created successfully
-		// We will requeue the reconciliation so that we can ensure the state
-		// and move forward for the next operations
-		return ctrl.Result{RequeueAfter: time.Minute}, nil
+		// Do we have to requeue the reconciliation?
+		return ctrl.Result{}, nil
 
 	} else if err != nil {
 		log.Error(err, "Failed to get Secret")
 		// Let's return the error for the reconciliation be re-trigged again
-		return ctrl.Result{}, err
+		return ctrl.Result{RequeueAfter: time.Minute}, err
 	}
 
-	return ctrl.Result{RequeueAfter: time.Minute}, nil
+	return ctrl.Result{}, nil
 
 }
 
@@ -121,7 +120,7 @@ func (r *PostgresReconciler) CreateService(ctx context.Context, Postgres *pxclie
 
 			if err := r.Status().Update(ctx, Postgres); err != nil {
 				log.Error(err, "Failed to update Postgres status")
-				return ctrl.Result{}, err
+				return ctrl.Result{RequeueAfter: time.Minute}, err
 			}
 
 			return ctrl.Result{}, err
@@ -135,17 +134,18 @@ func (r *PostgresReconciler) CreateService(ctx context.Context, Postgres *pxclie
 		}
 
 		// Service created successfully
-		// We will requeue the reconciliation so that we can ensure the state
-		// and move forward for the next operations
-		return ctrl.Result{RequeueAfter: time.Minute}, nil
+		return ctrl.Result{}, nil
 
 	} else if err != nil {
 		log.Error(err, "Failed to get Service")
 		// Let's return the error for the reconciliation be re-trigged again
-		return ctrl.Result{}, err
+		return ctrl.Result{RequeueAfter: time.Minute}, err
 	}
 
-	return ctrl.Result{RequeueAfter: time.Minute}, nil
+	// do we have to requeue if service is fine?
+	// we can just return nil here
+	// we don't need to requeue
+	return ctrl.Result{}, nil
 
 }
 
@@ -166,11 +166,11 @@ func (r *PostgresReconciler) CreateStatefulSet(ctx context.Context, Postgres *px
 			// The following implementation will update the status
 			meta.SetStatusCondition(&Postgres.Status.Conditions, metav1.Condition{Type: typeAvailablePostgres,
 				Status: metav1.ConditionFalse, Reason: "Reconciling",
-				Message: fmt.Sprintf("Failed to create Deployment for the custom resource (%s): (%s)", Postgres.Name, err)})
+				Message: fmt.Sprintf("Failed to create StatefulSet for the custom resource (%s): (%s)", Postgres.Name, err)})
 
 			if err := r.Status().Update(ctx, Postgres); err != nil {
 				log.Error(err, "Failed to update Postgres status")
-				return ctrl.Result{}, err
+				return ctrl.Result{RequeueAfter: time.Minute}, err
 			}
 
 			return ctrl.Result{}, err
@@ -185,9 +185,7 @@ func (r *PostgresReconciler) CreateStatefulSet(ctx context.Context, Postgres *px
 		}
 
 		// StatefulSet created successfully
-		// We will requeue the reconciliation so that we can ensure the state
-		// and move forward for the next operations
-		return ctrl.Result{RequeueAfter: time.Minute}, nil
+		return ctrl.Result{}, nil
 
 	} else if err != nil {
 		log.Error(err, "Failed to get StatefulSet")
@@ -195,7 +193,7 @@ func (r *PostgresReconciler) CreateStatefulSet(ctx context.Context, Postgres *px
 		return ctrl.Result{}, err
 	}
 
-	return ctrl.Result{RequeueAfter: time.Minute}, nil
+	return ctrl.Result{}, nil
 
 }
 
